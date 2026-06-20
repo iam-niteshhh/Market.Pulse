@@ -1,0 +1,10 @@
+FROM ghcr.io/dbt-labs/dbt-spark:1.8.0
+
+WORKDIR /dbt
+
+COPY . .
+
+RUN dbt deps
+
+# Container stays alive; Airflow triggers dbt via DockerOperator
+CMD ["tail", "-f", "/dev/null"]
