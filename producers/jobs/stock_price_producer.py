@@ -37,7 +37,6 @@ def produce_stock_prices():
                     'volume': data['volume'],
                     'currency': data['currency'],
                     'open': data['day_open'],
-                    'shares': data['shares'], 
                 }
 
                 producer.send('stock_prices', value=stock_price, key=ticker).add_callback(delivery_report)
