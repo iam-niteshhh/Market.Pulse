@@ -23,7 +23,7 @@ reddit_schema = StructType([
     StructField('subreddit', StringType()),
     StructField('score', DoubleType()),
     StructField('sentiment_polarity', DoubleType()),
-    StructField('sentiment_subjectivity', StringType()),
+    StructField('sentiment_subjectivity', DoubleType()),
     StructField('timestamp', LongType()),
 ])
 
