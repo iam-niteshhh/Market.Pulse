@@ -1,0 +1,42 @@
+version: 2
+
+sources:
+  - name: spark_gold
+    description: 'Gold Delta Lake tables written by PySpark Structured Streaming'
+    schema: market_pulse
+    freshness:
+      warn_after: {count: 30, period: minute}
+      error_after: {count: 60, period: minute}
+    loaded_at_field: window_end
+
+    tables:
+      - name: stock_prices
+        description: '5-min windowed OHLCV aggregates per ticker from Spark'
+        columns:
+          - name: ticker
+            description: 'Stock ticker symbol'
+          - name: window_start
+            description: 'Start of the 5-minute tumbling window'
+          - name: window_end
+            description: 'End of the 5-minute tumbling window'
+          - name: avg_close
+            description: 'Average closing price within the window'
+          - name: avg_volume
+            description: 'Average volume within the window'
+
+      - name: reddit_posts
+        description: 'Sentiment-scored Reddit posts from 3 subreddits'
+        columns:
+          - name: post_id
+          - name: subreddit
+          - name: title
+          - name: polarity
+          - name: subjectivity
+          - name: timestamp
+
+      - name: fx_rates
+        description: 'USD base FX rates - EUR, GBP, INR, JPY, AUD'
+        columns:
+          - name: quote_currency
+          - name: rate
+          - name: timestamp
