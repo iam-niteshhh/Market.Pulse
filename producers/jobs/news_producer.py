@@ -19,7 +19,7 @@ if not NEWS_API_KEY:
     raise ValueError("NEWS_API_KEY environment variable is not set.")
 
 KAFKA_BROKER = os.getenv("KAFKA_BROKER", "localhost:9092")
-TOPIC = "market-news"
+TOPIC = "news-posts"
 QUERY = (
     "stock market OR investing OR finance OR "
     "NASDAQ OR NYSE OR Apple OR Microsoft OR Tesla OR Amazon OR Google"

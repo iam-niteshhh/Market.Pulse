@@ -2,31 +2,27 @@
 -- Renames, casts, adds surrogate key. No business logic.
 
 with source as (
-    select * from {{source("../../data/delta/gold", "stock_prices")}}
+    select * from {{source("spark_silver", "stock_prices")}}
 ),
 renamed as (
     select
     -- keys
-    {{dbt_utils.generate_surrogate_key(['ticker', 'window_start'])}}  as stock_id
+    {{dbt_utils.generate_surrogate_key(['ticker', 'timestamp'])}}  as stock_id,
     
     -- dimensions
         CAST(ticker         AS STRING)  AS ticker,
-        -- time window
-        CAST(window_start   AS TIMESTAMP) AS window_start,
-        CAST(window_end     AS TIMESTAMP) AS window_end,
-        -- measures
-        CAST(avg_open       AS DOUBLE)  AS avg_open,
-        CAST(avg_high       AS DOUBLE)  AS avg_high,
-        CAST(avg_low        AS DOUBLE)  AS avg_low,
-        CAST(avg_close      AS DOUBLE)  AS avg_close,
-        CAST(avg_volume     AS BIGINT)  AS avg_volume,
-        -- metadata
-        CAST(record_count   AS INT)     AS record_count,
-        CURRENT_TIMESTAMP()             AS dbt_loaded_at
+        
+        CAST(open           AS DOUBLE)  AS open,
+        CAST(high           AS DOUBLE)  AS high,
+        CAST(low            AS DOUBLE)  AS low,
+        CAST(close          AS DOUBLE)  AS close,
+        CAST(volume         AS DOUBLE)  AS volume,
+        CAST(timestamp       AS TIMESTAMP)  AS timestamp,
+
+        current_timestamp() as dbt_loaded_at
 
     FROM source
     WHERE ticker IS NOT NULL
-      AND avg_close > 0
 
 )
 

@@ -17,10 +17,10 @@ stock_schema = StructType([
     StructField('timestamp', LongType()),
 ])
 
-reddit_schema = StructType([
+news_schema = StructType([
     StructField('id', StringType()),
     StructField('title', StringType()),
-    StructField('subreddit', StringType()),
+    StructField('subnews', StringType()),
     StructField('score', DoubleType()),
     StructField('sentiment_polarity', DoubleType()),
     StructField('sentiment_subjectivity', DoubleType()),
@@ -60,8 +60,8 @@ def main():
         .dropDuplicates(['ticker', 'timestamp'])
 
     df_market_news = df_bronze \
-        .filter(col('topic') == "market-news") \
-        .select(from_json(col('value').cast('string'), reddit_schema).alias('data')) \
+        .filter(col('topic') == "news-posts") \
+        .select(from_json(col('value').cast('string'), news_schema).alias('data')) \
         .select('data.*') \
         .withColumn('event_time', expr("timestamp_millis(timestamp)")) \
         .withWatermark('event_time', '2 minutes') \
@@ -81,11 +81,11 @@ def main():
         .option("checkpointLocation", "./data/spark/checkpoints/silver/stocks") \
         .start("./data/delta/silver/stocks")
 
-    query_reddit = df_market_news.writeStream \
+    query_news = df_market_news.writeStream \
         .format("delta") \
         .outputMode("append") \
-        .option("checkpointLocation", "./data/spark/checkpoints/silver/marker_news") \
-        .start("./data/delta/silver/reddit_posts")
+        .option("checkpointLocation", "./data/spark/checkpoints/silver/news_posts") \
+        .start("./data/delta/silver/news_posts")
 
     query_fx_rates = df_fx_rates.writeStream \
         .format("delta") \
@@ -97,7 +97,6 @@ def main():
         spark.streams.awaitAnyTermination()
     finally:
         spark.stop()
-
 
 if __name__ == "__main__":
     main()

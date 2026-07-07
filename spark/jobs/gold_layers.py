@@ -23,13 +23,13 @@ def main():
         .format("delta") \
         .load("./data/delta/silver/stocks")
 
-    df_silver_reddit = spark.readStream \
+    df_silver_news = spark.readStream \
         .format("delta") \
-        .load("./data/delta/silver/reddit_posts")
+        .load("./data/delta/silver/news_posts")
 
-    df_silver_fx_rates = spark.readStream \
-        .format("delta") \
-        .load("./data/delta/silver/fx_rates")
+    # df_silver_fx_rates = spark.readStream \
+    #     .format("delta") \
+    #     .load("./data/delta/silver/fx_rates")
 
     # 5-minute tumbling window on stock prices
     stock_windowed = df_silver_stocks \
@@ -42,7 +42,7 @@ def main():
             avg('volume').alias('avg_volume')
         )
 
-    sentiment_windowed = df_silver_reddit \
+    sentiment_windowed = df_silver_news \
         .groupBy(
             window(col('event_time'), '5 minutes')
         ) \

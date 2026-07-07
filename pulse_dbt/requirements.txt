@@ -1,2 +1,2 @@
 dbt-core
-dbt-spark
+dbt-spark[PyHive]

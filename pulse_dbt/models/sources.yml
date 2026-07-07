@@ -1,42 +1,103 @@
 version: 2
 
 sources:
-  - name: spark_gold
-    description: 'Gold Delta Lake tables written by PySpark Structured Streaming'
+
+  # SILVER LAYER
+  - name: spark_silver
+    description: "Silver Delta Lake tables written by PySpark Structured Streaming"
     schema: market_pulse
+
     freshness:
-      warn_after: {count: 30, period: minute}
-      error_after: {count: 60, period: minute}
+      warn_after:
+        count: 30
+        period: minute
+      error_after:
+        count: 60
+        period: minute
+    loaded_at_field: event_time
+
+    tables:
+      - name: stock_prices
+        description: "Parsed, typed and deduplicated stock price events"
+        external:
+          location: "./data/delta/silver/stock"
+          format: "delta"
+        # columns:
+        #   - name: ticker
+        #     description: "Stock ticker symbol"
+        #   - name: open
+        #   - name: high
+        #   - name: low
+        #   - name: close
+        #   - name: volume
+        #   - name: timestamp
+        #   - name: event_time
+
+      - name: news_posts
+        description: "Parsed news posts enriched with sentiment scores"
+        external:
+          location: "./data/delta/silver/news_posts"
+          format: "delta"
+        # columns:
+        #   - name: id
+        #   - name: title
+        #   - name: description
+        #   - name: content
+        #   - name: author
+        #   - name: source
+        #   - name: url
+        #   - name: image_url
+        #   - name: published_at
+        #   - name: sentiment_polarity
+        #   - name: sentiment_subjectivity
+          
+      - name: fx_rates
+        description: "Parsed foreign exchange rate events"
+        external:
+          location: "./data/delta/silver/fx_rates"
+          format: "delta"
+        # columns:
+        #   - name: base
+        #   - name: target
+        #   - name: rate
+        #   - name: timestamp
+        #   - name: event_time
+
+  # GOLD LAYER
+  - name: spark_gold
+    description: "Gold Delta Lake tables produced by Spark windowed aggregations"
+    schema: market_pulse
+
+    freshness:
+      warn_after:
+        count: 30
+        period: minute
+      error_after:
+        count: 60
+        period: minute
     loaded_at_field: window_end
 
     tables:
       - name: stock_prices
-        description: '5-min windowed OHLCV aggregates per ticker from Spark'
+        description: "5-minute aggregated stock metrics with sentiment"
         columns:
           - name: ticker
-            description: 'Stock ticker symbol'
+            description: "Stock ticker symbol"
+
           - name: window_start
-            description: 'Start of the 5-minute tumbling window'
+            description: "Start of the 5-minute window"
+
           - name: window_end
-            description: 'End of the 5-minute tumbling window'
+            description: "End of the 5-minute window"
+
           - name: avg_close
-            description: 'Average closing price within the window'
+            description: "Average closing price"
+
           - name: avg_volume
-            description: 'Average volume within the window'
+            description: "Average trading volume"
 
-      - name: reddit_posts
-        description: 'Sentiment-scored Reddit posts from 3 subreddits'
-        columns:
-          - name: post_id
-          - name: subreddit
-          - name: title
-          - name: polarity
-          - name: subjectivity
-          - name: timestamp
+          - name: avg_sentiment
+            description: "Average news sentiment polarity"
 
-      - name: fx_rates
-        description: 'USD base FX rates - EUR, GBP, INR, JPY, AUD'
-        columns:
-          - name: quote_currency
-          - name: rate
-          - name: timestamp
+          - name: avg_subjectivity
+            description: "Average news sentiment subjectivity"

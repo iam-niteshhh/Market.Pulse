@@ -17,7 +17,7 @@ def build_spark_session():
 
 
 KAFKA_BOOTSTRAP = "localhost:9092"
-TOPICS = "fx-rates,market-news,stock-prices"
+TOPICS = "fx-rates,news-posts,stock-prices"
 
 
 def main():
