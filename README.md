@@ -288,7 +288,7 @@ dbt connects to Spark through the Compose-managed `thriftserver` service. No sep
 Navigate to the dbt project directory and initialize the environment.
 
 ```bash
-cd pulse_dbt
+cd pulse_dbtw
 
 pip install -r requirements.txt
 dbt deps

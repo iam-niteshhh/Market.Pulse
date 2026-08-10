@@ -2,7 +2,7 @@
 -- Renames, casts, adds surrogate key. No business logic.
 
 with source as (
-    select * from {{source("spark_silver", "stock_prices")}}
+    select * from {{source("spark_silver", "stocks")}}
 ),
 renamed as (
     select

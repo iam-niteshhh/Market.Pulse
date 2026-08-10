@@ -1,12 +1,18 @@
-
 services:
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.0
+    container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
 
   kafka:
     image: confluentinc/cp-kafka:7.6.0
+    container_name: kafka
     depends_on:
       - zookeeper
     ports:
@@ -19,51 +25,101 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
 
   spark-master:
     image: apache/spark:3.5.0
+    container_name: spark-master
     environment:
-      - SPARK_NO_DAEMONIZE=true
-    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+      SPARK_NO_DAEMONIZE: "true"
+      HOME: /tmp
+      SPARK_USER: spark
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /tmp/.ivy2/cache /tmp/.ivy2/jars
+        chmod -R 777 /tmp/.ivy2
+        exec "$@"
+      - --
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.master.Master
     ports:
       - "8080:8080"
       - "7077:7077"
+    volumes:
+      - ./data:/data
+      - ./ivy_cache:/tmp/.ivy2
+
 
   spark-worker:
     image: apache/spark:3.5.0
-    environment:
-      - SPARK_NO_DAEMONIZE=true
-    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    container_name: spark-worker
     depends_on:
       - spark-master
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+      HOME: /tmp
+      SPARK_USER: spark
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /tmp/.ivy2/cache /tmp/.ivy2/jars
+        chmod -R 777 /tmp/.ivy2
+        exec "$@"
+      - --
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.worker.Worker
+      - spark://spark-master:7077
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./data:/data
+      - ./ivy_cache:/tmp/.ivy2
+
 
   thriftserver:
     image: apache/spark:3.5.0
     container_name: thriftserver
-    environment:
-      - SPARK_NO_DAEMONIZE=true
-    command: /opt/spark/sbin/start-thriftserver.sh --master spark://spark-master:7077
-    ports:
-      - "10000:10000"
     depends_on:
       - spark-master
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+      HOME: /tmp
+      SPARK_USER: spark
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /tmp/.ivy2/cache /tmp/.ivy2/jars
+        chmod -R 777 /tmp/.ivy2
+        exec "$@"
+      - --
+    command:
+      - /opt/spark/sbin/start-thriftserver.sh
+      - --master
+      - spark://spark-master:7077
+      - --conf
+      - spark.jars.ivy=/tmp/.ivy2
+      - --conf
+      - spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension
+      - --conf
+      - spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog
+      - --packages
+      - io.delta:delta-spark_2.12:3.1.0
+    ports:
+      - "10000:10000"
     volumes:
       - ./data:/data
-    networks:
-      default:
-  
-  # airflow:
-  #   image: apache/airflow:2.9.0
-  #   depends_on:
-  #     - kafka
-  #   ports:
-  #     - "8085:8080"
-  #   volumes:
-  #     - ./airflow/dags:/opt/airflow/dags
+      - ./ivy_cache:/tmp/.ivy2
 
-  # streamlit:
-  #     build: ./dashboard
-  #     ports: ['8501:8501']
-  #     volumes:
-  #       - ./data:/app/data
+
+networks:
+  default:
+    name: spark-kafka-network

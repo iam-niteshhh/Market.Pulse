@@ -17,10 +17,10 @@ sources:
     loaded_at_field: event_time
 
     tables:
-      - name: stock_prices
+      - name: stocks
         description: "Parsed, typed and deduplicated stock price events"
         external:
-          location: "./data/delta/silver/stock"
+          location: "../../data/delta/silver/stocks"
           format: "delta"
         # columns:
         #   - name: ticker
@@ -36,7 +36,7 @@ sources:
       - name: news_posts
         description: "Parsed news posts enriched with sentiment scores"
         external:
-          location: "./data/delta/silver/news_posts"
+          location: "../../data/delta/silver/news_posts"
           format: "delta"
         # columns:
         #   - name: id
@@ -54,7 +54,7 @@ sources:
       - name: fx_rates
         description: "Parsed foreign exchange rate events"
         external:
-          location: "./data/delta/silver/fx_rates"
+          location: "../../data/delta/silver/fx_rates"
           format: "delta"
         # columns:
         #   - name: base

@@ -1,0 +1,9 @@
+
+version: 2
+
+models:
+  - name: stg_news_posts
+    description: "Staging model for news_posts source table"
+    columns:
+      - name: id
+        description: "The primary key for this table"

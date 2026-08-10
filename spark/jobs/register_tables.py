@@ -38,7 +38,7 @@ for table in tables:
     spark.sql(f"""
         CREATE TABLE IF NOT EXISTS market_pulse.{table}
         USING DELTA
-        LOCATION '/Users/niteshsaini/Documents/SkillUp/Data_Engineering/Market.Pulse/data/delta/silver/{table}'
+        LOCATION '/data/delta/silver/{table}'
     """)
 print("DATABASES")
 spark.sql("SHOW DATABASES").show()
