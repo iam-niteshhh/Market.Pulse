@@ -136,7 +136,7 @@ If you want to run Spark locally outside Docker, also ensure Java is installed a
 - The producer scripts publish to Kafka on `localhost:9092` from the host machine, so they are intended to run from the same environment that is reaching Dockerized Kafka.
 - The Spark jobs write Delta tables under the `data/delta` folder and checkpoint state under `data/spark/checkpoints`.
 - In the current project, the Silver outputs are written to `data/delta/silver/stocks`, `data/delta/silver/news_posts`, and `data/delta/silver/fx_rates`; keep these in sync with the dbt source definitions in [pulse_dbt/models/sources.yml](pulse_dbt/models/sources.yml).
-- The Compose file also includes a dedicated `thriftserver` service for dbt connectivity.
+- The Compose file includes Spark and Kafka services. dbt will connect using a local Spark session instead of a Thrift server.
 
 ---
 
@@ -179,10 +179,10 @@ export TWELVE_DATA_API_KEY="your_twelve_data_api_key"
 
 ## 7. Start the Infrastructure
 
-The project uses Docker Compose to run Kafka, Spark, and the dbt-facing Thrift server.
+The project uses Docker Compose to run Kafka and Spark.
 
 ```bash
-docker compose up -d zookeeper kafka spark-master spark-worker thriftserver
+docker compose up -d zookeeper kafka spark-master spark-worker
 ```
 
 To verify the containers are running:
@@ -195,7 +195,6 @@ Useful service endpoints:
 
 - Kafka: localhost:9092
 - Spark Master UI: http://localhost:8080
-- Spark Thrift Server: localhost:10000
 
 ---
 
@@ -279,9 +278,9 @@ If you are running Spark from inside the Docker network, use `spark://spark-mast
 
 ---
 
-## 10. dbt Access Through Thrift Server
+## 10. dbt Access
 
-dbt connects to Spark through the Compose-managed `thriftserver` service. No separate manual Thrift server startup is required if you start the stack with the command shown in section 7.
+dbt will connect to Spark using its local `session` connection method. The repo no longer requires the Compose-managed `thriftserver` service.
 
 ## 11. Run dbt Models
 
@@ -311,9 +310,7 @@ market_pulse:
   outputs:
     dev:
       type: spark
-      method: thrift
-      host: localhost
-      port: 10000
+      method: session
       schema: market_pulse
       connect_retries: 3
       connect_timeout: 30
@@ -384,7 +381,7 @@ docker compose logs -f
 - For production, you would typically add monitoring, alerting, schema registry, Airflow or Prefect orchestration, and a dashboard layer.
 - Ensure the dbt source locations match the actual Delta paths created by Spark if you change the storage layout.
 - If the pipeline appears silent, check that the producers are running, Kafka topics were created, and the Spark streaming jobs are still active.
-- If dbt cannot connect, verify that the `thriftserver` container is up and that port `10000` is listening locally.
+- If dbt cannot connect, verify that your Spark session is running and that your local dbt profile is configured with `method: session`.
 
 ---
 
