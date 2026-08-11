@@ -89,10 +89,12 @@ services:
     container_name: thriftserver
     depends_on:
       - spark-master
+
     environment:
       SPARK_NO_DAEMONIZE: "true"
       HOME: /tmp
       SPARK_USER: spark
+
     entrypoint:
       - /bin/sh
       - -c
@@ -101,23 +103,27 @@ services:
         chmod -R 777 /tmp/.ivy2
         exec "$@"
       - --
+
     command:
       - /opt/spark/sbin/start-thriftserver.sh
       - --master
       - spark://spark-master:7077
       - --conf
       - spark.jars.ivy=/tmp/.ivy2
+      - --packages
+      - io.delta:delta-spark_2.12:3.1.0
       - --conf
       - spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension
       - --conf
       - spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog
-      - --packages
-      - io.delta:delta-spark_2.12:3.1.0
+
     ports:
       - "10000:10000"
+
     volumes:
       - ./data:/data
       - ./ivy_cache:/tmp/.ivy2
+
 
 
 networks:
